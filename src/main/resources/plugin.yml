@@ -1,0 +1,4 @@
+name: Depression
+version: '1.0-SNAPSHOT'
+main: desktecc.depression.Depression
+api-version: '1.21'
