@@ -2,15 +2,14 @@ package desktecc.depression.datas;
 
 public class PlayerMoodDATA {
     private boolean onDark;
-    private boolean onAsleep;
+    private PlayerSleepDATA checkSleep;
     private boolean nearEnderman;
     private long timeAlone = 0L;
     private Float mentalPoints;
 
-
-    public PlayerMoodDATA(boolean onDark, boolean onAsleep, boolean nearEnderman,Float mentalPoints){
+    public PlayerMoodDATA(boolean onDark, PlayerSleepDATA checkSleep, boolean nearEnderman,Float mentalPoints){
         this.onDark = onDark;
-        this.onAsleep = onAsleep;
+        this.checkSleep = checkSleep;
         this.nearEnderman = nearEnderman;
         this.mentalPoints = mentalPoints;
     }
@@ -37,12 +36,26 @@ public class PlayerMoodDATA {
         }
     }
 
-    public boolean getOnAsleep(){
-        return this.onAsleep;
+    public void addMentalPoints(Float points){
+        this.mentalPoints = this.mentalPoints+points;
+        if(this.mentalPoints>100.0F){
+            this.mentalPoints=100.0F;
+        }
     }
 
-    public void setOnAsleep(boolean onAsleep){
-        this.onAsleep = onAsleep;
+    public void subMentalPoints(Float points){
+        this.mentalPoints = this.mentalPoints-points;
+        if(this.mentalPoints<0.0F){
+            this.mentalPoints=0.0F;
+        }
+    }
+
+    public PlayerSleepDATA getCheckSleep(){
+        return this.checkSleep;
+    }
+
+    public void setOnAsleep(PlayerSleepDATA checkSleep){
+        this.checkSleep = checkSleep;
     }
 
     public boolean getNearEnderman(){

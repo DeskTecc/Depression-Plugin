@@ -5,7 +5,6 @@ import desktecc.depression.datas.PlayerMoodDATA;
 import desktecc.depression.datas.UnhealthyFoodsDATA;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.Statistic;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -34,8 +33,7 @@ public class NegativeMental implements Listener {
         Pair<Boolean, Float> unhealthyFoodValidation = validUnhealthyFood(event.getItem().getType());
 
         if(unhealthyFoodValidation.getValue0()){
-            Float mentalPoints = getPlayerMental(player).getMentalPoints();
-            getPlayerMental(player).setMentalPoints(mentalPoints- unhealthyFoodValidation.getValue1());
+            getPlayerMental(player).subMentalPoints(unhealthyFoodValidation.getValue1());
         }
     }
 
@@ -75,7 +73,7 @@ public class NegativeMental implements Listener {
     public static void onDamage(EntityDamageEvent event) {
         if (event.getDamage() >= 6.0){
             if (event.getEntity() instanceof Player player) {
-                getPlayerMental(player).setMentalPoints((getPlayerMentalPoints(player)-(float) event.getDamage()/2F));
+                getPlayerMental(player).subMentalPoints((float) event.getDamage()/2F);
             }
         }
     }
@@ -93,37 +91,14 @@ public class NegativeMental implements Listener {
             if (player.getLocation().getBlock().getLightLevel() < 5) {
                 playerMood.setOnDark(true);
 
-
-
                 scheduler.runTaskTimer(Depression.getPlugin(), task -> {
                     if (player.getLocation().getBlock().getLightLevel() < 5) {
-                        playerMood.setMentalPoints(getPlayerMentalPoints(player) - 2.0F);
+                        playerMood.subMentalPoints(2.0F);
                     } else {
                         playerMood.setOnDark(false);
                         task.cancel();
                     }
                 }, 20L * 60L, 20L * 60L);
-            }
-        }
-
-        //Check sleep
-        //Check if the player have sleep in least 15 minutes
-        if(!playerMood.getOnAsleep()) {
-            if (player.getStatistic(Statistic.TIME_SINCE_REST) >= 18000) {
-                float timeSinceRest = (float) player.getStatistic(Statistic.TIME_SINCE_REST);
-                playerMood.setMentalPoints(getPlayerMentalPoints(player) - 4.0F);
-
-                playerMood.setOnAsleep(true);
-
-                scheduler.runTaskTimer(Depression.getPlugin(), task -> {
-                    if (player.getStatistic(Statistic.TIME_SINCE_REST) >= 18000) {
-                        Float mentalPointsDamage = (timeSinceRest/10000)*2.0F;
-                        playerMood.setMentalPoints(getPlayerMentalPoints(player)-mentalPointsDamage);
-                    } else {
-                        playerMood.setOnAsleep(false);
-                        task.cancel();
-                    }
-                }, 20L * 60L, 20L * 60L * 15L);
             }
         }
 
@@ -151,7 +126,7 @@ public class NegativeMental implements Listener {
                         }
                     }
                     if (checkEnderman) {
-                        playerMood.setMentalPoints(getPlayerMentalPoints(player) - 1.5F);
+                        playerMood.subMentalPoints(1.5F);
                     } else {
                         playerMood.setNearEnderman(false);
                         task.cancel();
@@ -165,7 +140,7 @@ public class NegativeMental implements Listener {
                 long playerTime = playerMood.getTimeAlone();
 
                 if((playerTime+18000)<=player.getPlayerTime()){
-                    playerMood.setMentalPoints(getPlayerMentalPoints(player) - 2.0F);
+                    playerMood.subMentalPoints(2.0F);
                     playerMood.setTimeAlone(player.getPlayerTime()+18000);
                 }
             }
