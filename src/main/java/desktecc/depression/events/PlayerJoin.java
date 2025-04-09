@@ -1,5 +1,6 @@
 package desktecc.depression.events;
 
+import desktecc.depression.datas.PlayerMoodDATA;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -10,6 +11,7 @@ public class PlayerJoin implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event){
-        setPlayerMental(event.getPlayer(), 100F);
+        PlayerMoodDATA moodDATA = new PlayerMoodDATA(false, false,false,100.0F);
+        setPlayerMental(event.getPlayer(), moodDATA);
     }
 }

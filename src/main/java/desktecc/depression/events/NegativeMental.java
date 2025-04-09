@@ -1,20 +1,45 @@
 package desktecc.depression.events;
 
+import desktecc.depression.Depression;
+import desktecc.depression.datas.PlayerMoodDATA;
 import desktecc.depression.datas.UnhealthyFoodsDATA;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Statistic;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.scheduler.BukkitScheduler;
+import org.javatuples.Pair;
 
+import java.util.List;
 import java.util.Map;
 
-import static desktecc.depression.Depression.getPlayerMental;
+import static desktecc.depression.Depression.*;
 import static java.util.Map.entry;
 
 public class NegativeMental implements Listener {
 
+
+    //Eat unhealthy food
     @EventHandler
     public static void onEat(PlayerItemConsumeEvent event){
+        Player player = event.getPlayer();
+
+        Pair<Boolean, Float> unhealthyFoodValidation = validUnhealthyFood(event.getItem().getType());
+
+        if(unhealthyFoodValidation.getValue0()){
+            Float mentalPoints = getPlayerMental(player).getMentalPoints();
+            getPlayerMental(player).setMentalPoints(mentalPoints- unhealthyFoodValidation.getValue1());
+        }
+    }
+
+    public static Pair<Boolean, Float> validUnhealthyFood(Material consumable){
         Map<Material, Float> unhealthyFoods = Map.ofEntries(
                 entry(Material.POISONOUS_POTATO, UnhealthyFoodsDATA.POISONOUS_POTATO.getUnhealthyFoodPoints()),
                 entry(Material.ROTTEN_FLESH, UnhealthyFoodsDATA.ROTTEN_FLESH.getUnhealthyFoodPoints()),
@@ -29,19 +54,121 @@ public class NegativeMental implements Listener {
                 entry(Material.RABBIT, UnhealthyFoodsDATA.RABBIT.getUnhealthyFoodPoints()),
                 entry(Material.SALMON, UnhealthyFoodsDATA.SALMON.getUnhealthyFoodPoints()),
                 entry(Material.TROPICAL_FISH, UnhealthyFoodsDATA.TROPICAL_FISH.getUnhealthyFoodPoints())
-                );
+        );
 
         boolean ateUnhealthyFood = false;
-        //TODO: create a stream() to get food and subtract value from player mentalPoints
+        Float unhealthyPoints = 0.0F;
+
         for(Material food : unhealthyFoods.keySet()){
-            if(event.getItem().getType()==food){
-                ateUnhealthyFood=true;
+            if (consumable == food) {
+                ateUnhealthyFood = true;
+                unhealthyPoints = unhealthyFoods.get(food);
+                break;
             }
         }
 
-        if(ateUnhealthyFood){
-            Float mentalPoints = getPlayerMental(event.getPlayer());
-            //TODO: every food will have your own value to decrease mental points
+        return new Pair<>(ateUnhealthyFood,unhealthyPoints);
+    }
+
+    //Take too much damage
+    @EventHandler
+    public static void onDamage(EntityDamageEvent event) {
+        if (event.getDamage() >= 6.0){
+            if (event.getEntity() instanceof Player player) {
+                getPlayerMental(player).setMentalPoints((getPlayerMentalPoints(player)-(float) event.getDamage()/2F));
+            }
+        }
+    }
+
+    //Stay in the dark for too much time and too much time without sleep
+    @EventHandler
+    public static void onMove(PlayerMoveEvent event) {
+        Player player = event.getPlayer();
+        PlayerMoodDATA playerMood = getPlayerMental(player);
+        BukkitScheduler scheduler = Bukkit.getScheduler();
+
+        //Check the dark
+        //Check if player not on the dark previously
+        if(!playerMood.getOnDark()) {
+            if (player.getLocation().getBlock().getLightLevel() < 5) {
+                playerMood.setOnDark(true);
+
+
+
+                scheduler.runTaskTimer(Depression.getPlugin(), task -> {
+                    if (player.getLocation().getBlock().getLightLevel() < 5) {
+                        playerMood.setMentalPoints(getPlayerMentalPoints(player) - 2.0F);
+                    } else {
+                        playerMood.setOnDark(false);
+                        task.cancel();
+                    }
+                }, 20L * 60L, 20L * 60L);
+            }
+        }
+
+        //Check sleep
+        //Check if the player have sleep in least 15 minutes
+        if(!playerMood.getOnAsleep()) {
+            if (player.getStatistic(Statistic.TIME_SINCE_REST) >= 18000) {
+                float timeSinceRest = (float) player.getStatistic(Statistic.TIME_SINCE_REST);
+                playerMood.setMentalPoints(getPlayerMentalPoints(player) - 4.0F);
+
+                playerMood.setOnAsleep(true);
+
+                scheduler.runTaskTimer(Depression.getPlugin(), task -> {
+                    if (player.getStatistic(Statistic.TIME_SINCE_REST) >= 18000) {
+                        Float mentalPointsDamage = (timeSinceRest/10000)*2.0F;
+                        playerMood.setMentalPoints(getPlayerMentalPoints(player)-mentalPointsDamage);
+                    } else {
+                        playerMood.setOnAsleep(false);
+                        task.cancel();
+                    }
+                }, 20L * 60L, 20L * 60L * 15L);
+            }
+        }
+
+        //Check Enderman
+        if(!player.getLocation().getWorld().getNearbyEntities(player.getLocation(), 8, 8, 8).isEmpty()){
+            //if exists any entity so this add time
+            playerMood.setTimeAlone(player.getPlayerTime()+9000);
+
+            List<Entity> entities = (List<Entity>) player.getLocation().getWorld().getNearbyEntities(player.getLocation(), 8, 8, 8);
+
+            for(Entity entity: entities) {
+                if (entity.getType() == EntityType.ENDERMAN) {
+                    playerMood.setNearEnderman(true);
+                }
+            }
+            if(playerMood.getNearEnderman()) {
+                scheduler.runTaskTimer(Depression.getPlugin(), task -> {
+                    List<Entity> checkNewEntities = (List<Entity>) player.getLocation().getWorld().getNearbyEntities(player.getLocation(), 8, 8, 8);
+
+                    boolean checkEnderman = false;
+
+                    for(Entity entity: checkNewEntities) {
+                        if (entity.getType() == EntityType.ENDERMAN) {
+                            checkEnderman = true;
+                        }
+                    }
+                    if (checkEnderman) {
+                        playerMood.setMentalPoints(getPlayerMentalPoints(player) - 1.5F);
+                    } else {
+                        playerMood.setNearEnderman(false);
+                        task.cancel();
+                    }
+                }, 20L * 30L, 20L * 30L);
+            }
+        }else{
+            if(playerMood.getTimeAlone()==0L){
+                playerMood.setTimeAlone(player.getPlayerTime());
+            }else{
+                long playerTime = playerMood.getTimeAlone();
+
+                if((playerTime+18000)<=player.getPlayerTime()){
+                    playerMood.setMentalPoints(getPlayerMentalPoints(player) - 2.0F);
+                    playerMood.setTimeAlone(player.getPlayerTime()+18000);
+                }
+            }
         }
     }
 }
