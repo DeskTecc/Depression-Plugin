@@ -74,7 +74,11 @@ public class PositiveMental implements Listener {
         Player player = event.getPlayer();
 
         if(event.getRightClicked().getType().equals(EntityType.VILLAGER)){
-            getPlayerMental(player).setMentalPoints(getPlayerMental(player).getMentalPoints()+2.0F);
+            float points = 2.0F;
+            if(getPlayerMental(player).getVillagerClickCounter()<4) {
+                points = points-((float) getPlayerMental(player).getVillagerClickCounter()+1F)/2F;
+                getPlayerMental(player).addMentalPoints(points);
+            }
         }
     }
 
@@ -82,7 +86,7 @@ public class PositiveMental implements Listener {
     @EventHandler
     public static void onBreedAnimals(EntityBreedEvent event){
         if(event.getBreeder() instanceof Player player){
-            getPlayerMental(player).setMentalPoints(getPlayerMental(player).getMentalPoints()+2.0F);
+            getPlayerMental(player).addMentalPoints(2.0F);
         }
     }
 }

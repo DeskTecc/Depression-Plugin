@@ -28,9 +28,9 @@ and what is in progress.
 - [x] Eat healthy food.
 - [x] Good sleep.
 - [x] Breed animals.
-- [x] Trade with Villagers.
+- [x] Interact with Villagers.
 - [ ] Harvest plantation.
 
 ## PROGRESS
 
-20% ▰▰▱▱▱▱▱▱▱▱ 100%
+40% ▰▰▰▰▱▱▱▱▱▱ 100%

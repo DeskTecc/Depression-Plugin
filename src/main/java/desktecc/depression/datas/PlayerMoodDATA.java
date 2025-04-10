@@ -4,13 +4,15 @@ public class PlayerMoodDATA {
     private boolean onDark;
     private PlayerSleepDATA checkSleep;
     private boolean nearEnderman;
-    private long timeAlone = 0L;
+    private Integer villagerClickCounter;
+    private Long timeAlone = 0L;
     private Float mentalPoints;
 
-    public PlayerMoodDATA(boolean onDark, PlayerSleepDATA checkSleep, boolean nearEnderman,Float mentalPoints){
+    public PlayerMoodDATA(boolean onDark, PlayerSleepDATA checkSleep, boolean nearEnderman, Integer villagerClickCounter,Float mentalPoints){
         this.onDark = onDark;
         this.checkSleep = checkSleep;
         this.nearEnderman = nearEnderman;
+        this.villagerClickCounter = villagerClickCounter;
         this.mentalPoints = mentalPoints;
     }
 
@@ -64,6 +66,14 @@ public class PlayerMoodDATA {
 
     public void setNearEnderman(boolean nearEnderman){
         this.nearEnderman = nearEnderman;
+    }
+
+    public Integer getVillagerClickCounter(){
+        return this.villagerClickCounter;
+    }
+
+    public void setVillagerClickCounter(Integer villagerClickCounter){
+        this.villagerClickCounter = villagerClickCounter;
     }
 
     public long getTimeAlone(){

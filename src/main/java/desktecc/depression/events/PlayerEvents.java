@@ -27,6 +27,7 @@ public class PlayerEvents implements Listener {
             @Override
             public void run(){
                 float timeSinceRest = (float) player.getStatistic(Statistic.TIME_SINCE_REST);
+                getPlayerMental(player).setVillagerClickCounter(0);
                 if (player.getStatistic(Statistic.TIME_SINCE_REST) >= 18000) {
                     Float mentalPointsDamage = (timeSinceRest/10000)*2.0F;
                     getPlayerMental(player).subMentalPoints(mentalPointsDamage);
@@ -40,7 +41,7 @@ public class PlayerEvents implements Listener {
 
         PlayerSleepDATA playerSleepDATA = new PlayerSleepDATA(sleepCheck, false);
 
-        PlayerMoodDATA moodDATA = new PlayerMoodDATA(false, playerSleepDATA,false,100.0F);
+        PlayerMoodDATA moodDATA = new PlayerMoodDATA(false, playerSleepDATA,false, 0,100.0F);
 
         insertPlayerMental(event.getPlayer(), moodDATA);
     }
@@ -64,6 +65,6 @@ public class PlayerEvents implements Listener {
         getPlayerMental(player).getCheckSleep().setAsleep(false);
         getPlayerMental(player).setNearEnderman(false);
         getPlayerMental(player).setOnDark(false);
+        getPlayerMental(player).setVillagerClickCounter(0);
     }
-
 }
