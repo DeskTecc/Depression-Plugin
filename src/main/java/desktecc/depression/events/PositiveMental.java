@@ -1,17 +1,21 @@
 package desktecc.depression.events;
 
 import desktecc.depression.datas.HealthyFoodsDATA;
+import desktecc.depression.datas.PlayerMoodDATA;
 import org.bukkit.Material;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityBreedEvent;
+import org.bukkit.event.player.PlayerHarvestBlockEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.javatuples.Pair;
 
 
+import java.util.List;
 import java.util.Map;
 
 import static desktecc.depression.Depression.getPlayerMental;
@@ -87,6 +91,46 @@ public class PositiveMental implements Listener {
     public static void onBreedAnimals(EntityBreedEvent event){
         if(event.getBreeder() instanceof Player player){
             getPlayerMental(player).addMentalPoints(2.0F);
+        }
+    }
+
+    //Stay with pets
+    @EventHandler
+    public static void onMove(PlayerMoveEvent event){
+        Player player = event.getPlayer();
+        PlayerMoodDATA playerMood = getPlayerMental(player);
+
+        if(!player.getLocation().getWorld().getNearbyEntities(player.getLocation(), 8, 8, 8).isEmpty()) {
+            List<Entity> entities = (List<Entity>) player.getLocation().getWorld().getNearbyEntities(player.getLocation(), 8, 8, 8);
+
+            for (Entity entity : entities) {
+                Tameable animal = (Tameable) entity;
+
+                //if animal is tamed and the owner is the near player
+                if (animal.isTamed()) {
+                    if(animal.getOwner().getUniqueId().equals(player.getUniqueId())){
+                        playerMood.setTimeAlone(player.getPlayerTime() + 9000);
+                        playerMood.addMentalPoints(4.0F);
+                    }
+                }
+            }
+        }
+    }
+
+    //Events below for harvest crops
+    @EventHandler
+    public static void onHarvest(PlayerHarvestBlockEvent event){
+        Player player = event.getPlayer();
+        PlayerMoodDATA playerMood = getPlayerMental(player);
+        playerMood.addMentalPoints(0.15F);
+    }
+
+    @EventHandler
+    public static void onCrop(BlockBreakEvent event){
+        Player player = event.getPlayer();
+        PlayerMoodDATA playerMood = getPlayerMental(player);
+        if(event.getBlock().getType().isCompostable()){
+            playerMood.addMentalPoints(0.15F);
         }
     }
 }

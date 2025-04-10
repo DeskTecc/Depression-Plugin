@@ -24,13 +24,13 @@ and what is in progress.
 
 ### What can increase levels of mood?
 
-- [ ] Stay with pets (near of your own dog/cat/parrot/horse)
+- [x] Stay with pets (near of your own dog/cat/parrot/horse)
 - [x] Eat healthy food.
 - [x] Good sleep.
 - [x] Breed animals.
 - [x] Interact with Villagers.
-- [ ] Harvest plantation.
+- [x] Harvest plantation.
 
 ## PROGRESS
 
-40% ▰▰▰▰▱▱▱▱▱▱ 100%
+50% ▰▰▰▰▰▱▱▱▱▱ 100%
