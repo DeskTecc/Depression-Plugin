@@ -31,6 +31,22 @@ and what is in progress.
 - [x] Interact with Villagers.
 - [x] Harvest plantation.
 
+### To add
+
+How mood can modify the game:
+Level diff 10 by 10 and what have been implemented:
+- [x] Level: 100 (fully normal);
+- [x] Level: 90 (Eat meat will not complete hungry bar (fish can complete because is good for depression), will remain 1/2 to complete);
+- [x] Level: 80 (Can't kill pacific mobs)
+- [x] Level: 70 (Weakness effect)
+- [x] Level: 60 (Every food will raise only one hunger bar)
+- [x] Level: 50 (Mining Fatigue)
+- [x] Level: 40 (Will randomly start to hear monster sounds near)
+- [x] Level: 30 (Light will give blindness effect)
+- [x] Level: 20 (Can't break any block with pickaxe)
+- [x] Level: 10 (Creatures don't care about you + you have blindness effect independent of light source)
+- [ ] Level: 0 (Did you hear the sound? A music disk will start to play and everything can be your end, a little fall, click with sword, swim on water, hold a lighter)
+
 ## PROGRESS
 
-50% ▰▰▰▰▰▱▱▱▱▱ 100%
+70% ▰▰▰▰▰▰▰▱▱▱ 100%
