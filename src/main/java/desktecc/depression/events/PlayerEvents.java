@@ -1,25 +1,17 @@
 package desktecc.depression.events;
 
-import desktecc.depression.Depression;
 import desktecc.depression.datas.PlayerMoodDATA;
 import desktecc.depression.datas.PlayerSleepDATA;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.Sound;
-import org.bukkit.Statistic;
+import org.bukkit.*;
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityTargetEvent;
-import org.bukkit.event.entity.FoodLevelChangeEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerItemConsumeEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.entity.*;
+import org.bukkit.event.player.*;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -38,7 +30,7 @@ public class PlayerEvents implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event){
         Player player = event.getPlayer();
         BukkitScheduler scheduler = Bukkit.getScheduler();
-        scheduler.runTaskTimer(Depression.getPlugin(), () -> {
+        scheduler.runTaskTimer(getPlugin(), () -> {
             if(getPlayerMental(player).getMentalPoints()<=70){
                 player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 15,1));
             }
@@ -100,6 +92,12 @@ public class PlayerEvents implements Listener {
                     }
                 }
             }
+            if(getPlayerMental(player).getMentalPoints()<=0){
+                getPlayerMental(player).setMentalPoints(0F);
+                player.playSound(player.getLocation(), Sound.MUSIC_DISC_CREATOR_MUSIC_BOX, 1F, 1F);
+                getPlayerMental(player).setDeeplyDepression(true);
+            }
+            Bukkit.getConsoleSender().sendMessage(debugSoloInfo(player));
         }, 20L * 10L, 20L * 10L);
 
 
@@ -116,13 +114,12 @@ public class PlayerEvents implements Listener {
                     getPlayerMental(player).getCheckSleep().setAsleep(false);
                     getPlayerMental(player).addMentalPoints(2.0F);
                 }
-                Bukkit.getConsoleSender().sendMessage(debugSoloInfo(player));
             }
-        }.runTaskTimer(Depression.getPlugin(),20L * 60L, 20L * 60L * 15L);
+        }.runTaskTimer(getPlugin(),20L * 60L, 20L * 60L * 15L);
 
         PlayerSleepDATA playerSleepDATA = new PlayerSleepDATA(sleepCheck, false);
 
-        PlayerMoodDATA moodDATA = new PlayerMoodDATA(false, playerSleepDATA,false, 0,100.0F);
+        PlayerMoodDATA moodDATA = new PlayerMoodDATA(false, playerSleepDATA,false, 0, false,100.0F);
 
         insertPlayerMental(event.getPlayer(), moodDATA);
     }
@@ -138,15 +135,24 @@ public class PlayerEvents implements Listener {
     }
 
     @EventHandler
-    public void onPlayerDie(PlayerDeathEvent event){
+    public void onPlayerDeath(PlayerDeathEvent event){
         Player player = event.getEntity();
         //Infos reset when player die
+        if(getPlayerMental(player).getMentalPoints()<=0.0F){
+            if(getPlayerMental(player).getDeeplyDepression()){
+                event.setDeathMessage(String.format("%s commited suicide", player.getDisplayName()));
+            }else{
+                event.setDeathMessage("");
+            }
+        }
+
         getPlayerMental(player).setMentalPoints(100.0F);
         getPlayerMental(player).setTimeAlone(0L);
         getPlayerMental(player).getCheckSleep().setAsleep(false);
         getPlayerMental(player).setNearEnderman(false);
         getPlayerMental(player).setOnDark(false);
         getPlayerMental(player).setVillagerClickCounter(0);
+
     }
 
     //mentalPoints below 90
@@ -231,6 +237,81 @@ public class PlayerEvents implements Listener {
     public void onPlayerTargeted(EntityTargetEvent event){
         if(event.getTarget() instanceof Player){
             event.setCancelled(true);
+        }
+    }
+
+    //Deeply Depression 0 mentalPoints
+    @EventHandler
+    public void onPlayerDamage(EntityDamageEvent event){
+        if(event.getEntity() instanceof Player player){
+            if(getPlayerMental(player).getDeeplyDepression()) {
+                String deathMessage = switch (event.getCause()) {
+                    case EntityDamageEvent.DamageCause.FALL ->
+                            String.format("%s committed suicide by jumping from a high place", player.getDisplayName());
+                    case EntityDamageEvent.DamageCause.HOT_FLOOR, EntityDamageEvent.DamageCause.CAMPFIRE,
+                         EntityDamageEvent.DamageCause.FIRE_TICK, EntityDamageEvent.DamageCause.FIRE ->
+                            String.format("%s committed suicide by setting fire", player.getDisplayName());
+                    case EntityDamageEvent.DamageCause.LAVA ->
+                            String.format("%s committed suicide by jumping in a lava", player.getDisplayName());
+                    case EntityDamageEvent.DamageCause.DROWNING ->
+                            String.format("%s committed suicide by drowning", player.getDisplayName());
+                    case EntityDamageEvent.DamageCause.POISON ->
+                            String.format("%s committed suicide by drinking poison", player.getDisplayName());
+                    case EntityDamageEvent.DamageCause.STARVATION ->
+                            String.format("%s committed suicide by hunger", player.getDisplayName());
+                    case EntityDamageEvent.DamageCause.FLY_INTO_WALL ->
+                            String.format("%s committed suicide by hit the wall", player.getDisplayName());
+                    case EntityDamageEvent.DamageCause.SUFFOCATION ->
+                            String.format("%s committed suicide by suffocation", player.getDisplayName());
+                    default -> "";
+                };
+
+                if (!deathMessage.isEmpty()) {
+                    player.setHealth(0.0F);
+                    Bukkit.broadcastMessage(ChatColor.RED + deathMessage + ChatColor.RESET);
+                    getPlayerMental(player).setDeeplyDepression(false);
+                }
+            }
+        }
+    }
+
+    //DeeplyDepression
+    @EventHandler
+    public void onPlayerMove(PlayerMoveEvent event){
+        Player player = event.getPlayer();
+        if(getPlayerMental(player).getDeeplyDepression()){
+            if(player.getLocation().getBlock().getType().equals(Material.WATER)){
+                player.setHealth(0.0F);
+            }
+        }
+    }
+
+    //DeeplyDepression
+    @EventHandler
+    public void onPlayerClick(PlayerInteractEvent event)   {
+        Player player = event.getPlayer();
+
+        if(getPlayerMental(player).getDeeplyDepression()){
+            List<Material> swords = Arrays.asList(
+                    Material.WOODEN_SWORD,
+                    Material.STONE_SWORD,
+                    Material.GOLDEN_SWORD,
+                    Material.IRON_SWORD,
+                    Material.DIAMOND_SWORD,
+                    Material.NETHERITE_SWORD
+            );
+            boolean usingSword = false;
+            for(Material sword: swords){
+                if(event.getItem().getType().equals(sword)){
+                    usingSword=true;
+                    break;
+                }
+            }
+            if(usingSword) {
+                if (event.getAction().equals(Action.LEFT_CLICK_AIR) || event.getAction().equals(Action.RIGHT_CLICK_AIR)) {
+                    player.setHealth(0.0F);
+                }
+            }
         }
     }
 }
